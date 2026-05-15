@@ -15,7 +15,7 @@ namespace HeThongQuanLiSinhVien
             string username = txtUsername.Text;
             string password = txtPassword.Text;
 
-            if (username == "abc@gmail.com" && password == "123456")
+            if (username == "68PM2_phamdonganh_0001668@gmail.com" && password == "123456")
             {
                 MessageBox.Show("Đăng nhập thành công!");
             }

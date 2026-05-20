@@ -18,6 +18,10 @@ namespace HeThongQuanLiSinhVien
             if (username == "68PM2_phamdonganh_0001668@gmail.com" && password == "123456")
             {
                 MessageBox.Show("Đăng nhập thành công!");
+                // Mở frm_main và ẩn LoginForm
+                frm_main main = new frm_main();
+                main.Show();
+                this.Hide();
             }
             else
             {

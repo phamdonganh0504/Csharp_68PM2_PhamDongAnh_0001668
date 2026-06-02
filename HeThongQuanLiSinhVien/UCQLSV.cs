@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Data.SqlClient;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -12,10 +13,52 @@ namespace HeThongQuanLiSinhVien
 {
     public partial class UCQLSV : UserControl
     {
+        SqlConnection conn = new SqlConnection(
+            @"Data Source=DESKTOP-M0VLVFF\SQLEXPRESS03;
+              Initial Catalog=HeThongQLSV;
+              Integrated Security=True");
         public UCQLSV()
         {
             InitializeComponent();
 
+        }
+        private void DisplayStudentList()
+        {
+            try
+            {
+                dgvSinhVien.Rows.Clear();
+
+                conn.Open();
+
+                string sql = "SELECT * FROM SinhVien";
+
+                SqlCommand cmd =
+                    new SqlCommand(sql, conn);
+
+                SqlDataReader dr =
+                    cmd.ExecuteReader();
+
+                while (dr.Read())
+                {
+                    dgvSinhVien.Rows.Add(
+                        dr["MaSV"].ToString(),
+                        dr["HoTen"].ToString(),
+                        dr["GioiTinh"].ToString(),
+                        dr["NamSinh"].ToString(),
+                        dr["Lop"].ToString()
+                    );
+                }
+
+                dr.Close();
+                conn.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+
+                if (conn.State == ConnectionState.Open)
+                    conn.Close();
+            }
         }
 
         private void menuStrip1_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
@@ -25,13 +68,20 @@ namespace HeThongQuanLiSinhVien
 
         private void UCQLSV_Load(object sender, EventArgs e)
         {
-            dtpNgaySinh.Format = DateTimePickerFormat.Custom;
+            dtpNgaySinh.Format =
+                DateTimePickerFormat.Custom;
 
-            dtpNgaySinh.CustomFormat = "dd/MM/yyyy";
+            dtpNgaySinh.CustomFormat =
+                "dd/MM/yyyy";
 
-            dgvSinhVien.Rows.Add("1", "Nguyễn Văn A", "Nam", "15/05/2005", "68PM1");
+            cboLop.Items.Clear();
 
-            dgvSinhVien.Rows.Add("2", "Trần Văn B", "Nam", "20/08/2005", "68PM2");
+            cboLop.Items.Add("CNTT1");
+            cboLop.Items.Add("CNTT2");
+            cboLop.Items.Add("CNTT3");
+            cboLop.Items.Add("CNTT4");
+
+            DisplayStudentList();
         }
 
         private void dgvSinhVien_CellContentClick(object sender, DataGridViewCellEventArgs e)
@@ -91,17 +141,69 @@ namespace HeThongQuanLiSinhVien
 
         }
 
-        private void btnThem_Click(object sender, EventArgs e)
+        private void btnThem_Click(object sender,EventArgs e)
         {
-            dgvSinhVien.Rows.Add(
-            txtMaSV.Text,
-            txtHoTen.Text,
-            cboGioiTinh.Text,
-            dtpNgaySinh.Value.ToString("dd/MM/yyyy"),
-            cboLop.Text
-            );
+            try
+            {
+                conn.Open();
 
-             MessageBox.Show("Thêm sinh viên thành công!");
+                string sql =
+                @"INSERT INTO SinhVien
+        (
+            MaSV,
+            HoTen,
+            Lop,
+            GioiTinh,
+            NamSinh
+        )
+        VALUES
+        (
+            @MaSV,
+            @HoTen,
+            @Lop,
+            @GioiTinh,
+            @NamSinh
+        )";
+
+                SqlCommand cmd =
+                    new SqlCommand(sql, conn);
+
+                cmd.Parameters.AddWithValue(
+                    "@MaSV",
+                    txtMaSV.Text);
+
+                cmd.Parameters.AddWithValue(
+                    "@HoTen",
+                    txtHoTen.Text);
+
+                cmd.Parameters.AddWithValue(
+                    "@Lop",
+                    cboLop.Text);
+
+                cmd.Parameters.AddWithValue(
+                    "@GioiTinh",
+                    cboGioiTinh.Text);
+
+                cmd.Parameters.AddWithValue(
+                    "@NamSinh",
+                    dtpNgaySinh.Value.Year);
+
+                cmd.ExecuteNonQuery();
+
+                conn.Close();
+
+                MessageBox.Show(
+                    "Thêm sinh viên thành công!");
+
+                DisplayStudentList();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+
+                if (conn.State == ConnectionState.Open)
+                    conn.Close();
+            }
         }
 
         private void btnSua_Click(object sender, EventArgs e)

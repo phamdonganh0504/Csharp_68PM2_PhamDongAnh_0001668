@@ -1,293 +1,213 @@
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Data.SqlClient;
-using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace HeThongQuanLiSinhVien
 {
     public partial class UCQLSV : UserControl
     {
-        SqlConnection conn = new SqlConnection(
-            @"Data Source=DESKTOP-M0VLVFF\SQLEXPRESS03;
-              Initial Catalog=HeThongQLSV;
-              Integrated Security=True");
+        
+        QLSV_DataDataContext db = new QLSV_DataDataContext();
+
         public UCQLSV()
         {
             InitializeComponent();
-
-        }
-        private void DisplayStudentList()
-        {
-            try
-            {
-                dgvSinhVien.Rows.Clear();
-
-                conn.Open();
-
-                string sql = "SELECT * FROM SinhVien";
-
-                SqlCommand cmd =
-                    new SqlCommand(sql, conn);
-
-                SqlDataReader dr =
-                    cmd.ExecuteReader();
-
-                while (dr.Read())
-                {
-                    dgvSinhVien.Rows.Add(
-                        dr["MaSV"].ToString(),
-                        dr["HoTen"].ToString(),
-                        dr["GioiTinh"].ToString(),
-                        dr["NamSinh"].ToString(),
-                        dr["Lop"].ToString()
-                    );
-                }
-
-                dr.Close();
-                conn.Close();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-
-                if (conn.State == ConnectionState.Open)
-                    conn.Close();
-            }
-        }
-
-        private void menuStrip1_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
-        {
-
         }
 
         private void UCQLSV_Load(object sender, EventArgs e)
         {
-            dtpNgaySinh.Format =
-                DateTimePickerFormat.Custom;
-
-            dtpNgaySinh.CustomFormat =
-                "dd/MM/yyyy";
+            dtpNgaySinh.Format = DateTimePickerFormat.Custom;
+            dtpNgaySinh.CustomFormat = "dd/MM/yyyy";
 
             cboLop.Items.Clear();
-
-            cboLop.Items.Add("CNTT1");
-            cboLop.Items.Add("CNTT2");
-            cboLop.Items.Add("CNTT3");
-            cboLop.Items.Add("CNTT4");
+            cboLop.Items.Add("68PM1");
+            cboLop.Items.Add("68PM2");
+            cboLop.Items.Add("68PM3");
+            cboLop.Items.Add("68PM4");
 
             DisplayStudentList();
         }
 
-        private void dgvSinhVien_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        // DANH SACH SINH VIEN
+        private void DisplayStudentList()
         {
-            if (e.RowIndex >= 0)
+            dgvSinhVien.Rows.Clear();
+
+            var dsSinhVien = (from sv in db.SinhViens
+                              select sv).ToList();
+
+            foreach (var item in dsSinhVien)
             {
-                DataGridViewRow row = dgvSinhVien.Rows[e.RowIndex];
+                // Kiểm tra DateTime. Do lúc trước cấu trúc bảng cho null nên ép kiểu an toàn
+                string ngayDisplay = "";
+                if (item.NamSinh != null)
+                {
+                    ngayDisplay = item.NamSinh.Value.ToString("dd/MM/yyyy");
+                }
 
-                txtMaSV.Text = row.Cells[0].Value.ToString();
-
-                txtHoTen.Text = row.Cells[1].Value.ToString();
-
-                cboGioiTinh.Text = row.Cells[2].Value.ToString();
-
-                        if (DateTime.TryParseExact(
-                row.Cells[3].Value.ToString(),
-                "dd/MM/yyyy",
-                null,
-                System.Globalization.DateTimeStyles.None,
-                out DateTime parsedDate))
-                        {
-                            dtpNgaySinh.Value = parsedDate;
-                        }
-
-                cboLop.Text = row.Cells[4].Value.ToString();
+                dgvSinhVien.Rows.Add(item.MaSV, item.HoTen, item.GioiTinh, ngayDisplay, item.Lop);
             }
         }
 
+        // HÀM CLICK ĐƯA DATA TỪ DATAGRIDVIEW LÊN FORM
         private void dgvSinhVien_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex >= 0)
             {
                 DataGridViewRow row = dgvSinhVien.Rows[e.RowIndex];
 
-                txtMaSV.Text = row.Cells[0].Value.ToString();
+                txtMaSV.Text = row.Cells[0].Value?.ToString();
+                txtHoTen.Text = row.Cells[1].Value?.ToString();
+                cboGioiTinh.Text = row.Cells[2].Value?.ToString();
+                cboLop.Text = row.Cells[4].Value?.ToString();
 
-                txtHoTen.Text = row.Cells[1].Value.ToString();
-
-                cboGioiTinh.Text = row.Cells[2].Value.ToString();
-
-                    if (DateTime.TryParseExact(
-                row.Cells[3].Value.ToString(),
-                "dd/MM/yyyy",
-                null,
-                System.Globalization.DateTimeStyles.None,
-                out DateTime parsedDate))
-                    {
-                        dtpNgaySinh.Value = parsedDate;
+                string dateString = row.Cells[3].Value?.ToString();
+                if (DateTime.TryParseExact(dateString, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime parsedDate))
+                {
+                    dtpNgaySinh.Value = parsedDate;
                 }
-
-                cboLop.Text = row.Cells[4].Value.ToString();
             }
         }
 
-        private void txtMaSV_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void btnThem_Click(object sender,EventArgs e)
+        // HÀM THÊM MỚI BẰNG LINQ TO SQL (CREATE)
+        private void btnThem_Click(object sender, EventArgs e)
         {
             try
             {
-                conn.Open();
+                // Bước 1: Khởi tạo một đối tượng SinhVien (Class này DBML tự sinh)
+                SinhVien svNew = new SinhVien();
+                svNew.MaSV = txtMaSV.Text;
+                svNew.HoTen = txtHoTen.Text;
+                svNew.Lop = cboLop.Text;
+                svNew.GioiTinh = cboGioiTinh.Text;
+                svNew.NamSinh = dtpNgaySinh.Value.Date; // SQL đã fix lỗi lấy đúng ngày
 
-                string sql =
-                @"INSERT INTO SinhVien
-        (
-            MaSV,
-            HoTen,
-            Lop,
-            GioiTinh,
-            NamSinh
-        )
-        VALUES
-        (
-            @MaSV,
-            @HoTen,
-            @Lop,
-            @GioiTinh,
-            @NamSinh
-        )";
+                // Bước 2: Gọi phương thức báo cho DBML biết cần chèn bản ghi
+                db.SinhViens.InsertOnSubmit(svNew);
 
-                SqlCommand cmd =
-                    new SqlCommand(sql, conn);
+                // Bước 3: Đồng bộ dữ liệu thật xuống SQL Server (Thực thi)
+                db.SubmitChanges();
 
-                cmd.Parameters.AddWithValue(
-                    "@MaSV",
-                    txtMaSV.Text);
-
-                cmd.Parameters.AddWithValue(
-                    "@HoTen",
-                    txtHoTen.Text);
-
-                cmd.Parameters.AddWithValue(
-                    "@Lop",
-                    cboLop.Text);
-
-                cmd.Parameters.AddWithValue(
-                    "@GioiTinh",
-                    cboGioiTinh.Text);
-
-                cmd.Parameters.AddWithValue(
-                    "@NamSinh",
-                    dtpNgaySinh.Value.Year);
-
-                cmd.ExecuteNonQuery();
-
-                conn.Close();
-
-                MessageBox.Show(
-                    "Thêm sinh viên thành công!");
-
+                MessageBox.Show("Thêm sinh viên thành công!");
                 DisplayStudentList();
+                btnLamMoi_Click(sender, e);
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
-
-                if (conn.State == ConnectionState.Open)
-                    conn.Close();
+                MessageBox.Show("Trùng mã sinh viên hoặc Lỗi CSDL: " + ex.Message);
             }
         }
 
+        // HÀM CẬP NHẬT BẰNG LINQ TO SQL (UPDATE)
         private void btnSua_Click(object sender, EventArgs e)
         {
-            if (dgvSinhVien.CurrentRow != null)
+            try
             {
-                dgvSinhVien.CurrentRow.Cells[0].Value = txtMaSV.Text;
+                // Bước 1: LINQ - Truy vấn ra ĐÚNG sinh viên mang cái MaSV ở TextBox
+                // Cú pháp Lambda Expression rút gọn của LINQ:
+                var svSua = db.SinhViens.SingleOrDefault(sv => sv.MaSV == txtMaSV.Text);
 
-                dgvSinhVien.CurrentRow.Cells[1].Value = txtHoTen.Text;
+                if (svSua != null)
+                {
+                    // Bước 2: Cập nhật properties
+                    svSua.HoTen = txtHoTen.Text;
+                    svSua.GioiTinh = cboGioiTinh.Text;
+                    svSua.Lop = cboLop.Text;
+                    svSua.NamSinh = dtpNgaySinh.Value.Date;
 
-                dgvSinhVien.CurrentRow.Cells[2].Value = cboGioiTinh.Text;
+                    // Bước 3: Đẩy xuống SQL 
+                    db.SubmitChanges();
 
-                dgvSinhVien.CurrentRow.Cells[3].Value =
-                    dtpNgaySinh.Value.ToString("dd/MM/yyyy");
-
-                dgvSinhVien.CurrentRow.Cells[4].Value = cboLop.Text;
-
-                MessageBox.Show("Sửa thành công!");
+                    MessageBox.Show("Sửa thành công!");
+                    DisplayStudentList();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi: " + ex.Message);
             }
         }
 
+        // HÀM XÓA BẰNG LINQ TO SQL (DELETE)
         private void btnXoa_Click(object sender, EventArgs e)
         {
-            if (dgvSinhVien.CurrentRow != null)
+            DialogResult result = MessageBox.Show($"Xác nhận xóa SV: {txtHoTen.Text}?", "Xóa", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            if (result == DialogResult.Yes)
             {
-                DialogResult result = MessageBox.Show(
-                    "Bạn có chắc muốn xóa sinh viên này?",
-                    "Xác nhận",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Question);
-
-                if (result == DialogResult.Yes)
+                try
                 {
-                    dgvSinhVien.Rows.RemoveAt(dgvSinhVien.CurrentRow.Index);
+                    // Lọc tìm đúng sinh viên đó
+                    var svXoa = db.SinhViens.SingleOrDefault(sv => sv.MaSV == txtMaSV.Text);
+
+                    if (svXoa != null)
+                    {
+                        // Hàm xóa mặc định của LINQ to SQL
+                        db.SinhViens.DeleteOnSubmit(svXoa);
+                        db.SubmitChanges();
+
+                        MessageBox.Show("Xóa thành công!");
+                        btnLamMoi_Click(sender, e);
+                    }
                 }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Lỗi CSDL khi xóa: " + ex.Message);
+                }
+            }
+        }
+
+        // TÌM KIẾM ĐỈNH CAO NHỜ LINQ 
+        private void btnTim_Click(object sender, EventArgs e)
+        {
+            string tukhoa = txtTimKiem.Text.ToLower().Trim();
+
+            // Nếu ô trống thì Load tất cả
+            if (string.IsNullOrEmpty(tukhoa))
+            {
+                DisplayStudentList();
+                return;
+            }
+
+            // *** LINQ To SQL : SELECT LIKE '%...%' ***
+            // Bạn có thể viết SQL cực kỳ gọn dưới dạng Method syntax:
+            var danhSachLoc = db.SinhViens.Where(sv =>
+                                    sv.MaSV.Contains(tukhoa) ||
+                                    sv.HoTen.Contains(tukhoa) ||
+                                    sv.Lop.Contains(tukhoa)
+                              ).ToList();
+
+            // Làm sạch lưới để đắp cái mới
+            dgvSinhVien.Rows.Clear();
+
+            // Duyệt và vẽ lên DataGridView thôi
+            foreach (var item in danhSachLoc)
+            {
+                string ngayDisplay = "";
+                if (item.NamSinh != null) ngayDisplay = item.NamSinh.Value.ToString("dd/MM/yyyy");
+
+                dgvSinhVien.Rows.Add(item.MaSV, item.HoTen, item.GioiTinh, ngayDisplay, item.Lop);
             }
         }
 
         private void btnLamMoi_Click(object sender, EventArgs e)
         {
             txtMaSV.Clear();
-
             txtHoTen.Clear();
-
             cboGioiTinh.SelectedIndex = -1;
-
             cboLop.SelectedIndex = -1;
-
             dtpNgaySinh.Value = DateTime.Now;
+            txtTimKiem.Clear();
 
             txtMaSV.Focus();
+            DisplayStudentList();
         }
 
         private void txtTimKiem_TextChanged(object sender, EventArgs e)
         {
-
+            btnTim_Click(sender, e);
         }
 
-        private void btnTim_Click(object sender, EventArgs e)
-        {
-            string tukhoa = txtTimKiem.Text.ToLower();
-
-            foreach (DataGridViewRow row in dgvSinhVien.Rows)
-            {
-                if (row.Cells[0].Value != null)
-                {
-                    string maSV = row.Cells[0].Value.ToString().ToLower();
-
-                    string hoTen = row.Cells[1].Value.ToString().ToLower();
-
-                    string lop = row.Cells[4].Value.ToString().ToLower();
-
-                    if (maSV.Contains(tukhoa) ||
-                        hoTen.Contains(tukhoa) ||
-                        lop.Contains(tukhoa))
-                    {
-                        row.Visible = true;
-                    }
-                    else
-                    {
-                        row.Visible = false;
-                    }
-                }
-            }
-        }
+        // Để rỗng mấy sự kiện lỗi chuột nhầm này nhé 
+        private void dgvSinhVien_CellContentClick(object sender, DataGridViewCellEventArgs e) { }
     }
 }

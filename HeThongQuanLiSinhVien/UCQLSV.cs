@@ -118,8 +118,41 @@ namespace HeThongQuanLiSinhVien
 
         private void btnSua_Click(object sender, EventArgs e)
         {
-                            
-        }
+            if (txtMaSV.Text == "")
+            {
+                MessageBox.Show("Vui lòng chọn một sinh viên để sửa!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                
+                var sv = db.SinhViens.SingleOrDefault(x => x.MaSV == txtMaSV.Text);
+
+                if (sv != null)
+                {
+                    
+                    sv.HoTen = txtHoTen.Text;
+                    sv.GioiTinh = cboGioiTinh.Text;
+                    sv.Lop = cboLop.Text;
+                    sv.NamSinh = dtpNgaySinh.Value.Date;
+
+                    
+                    db.SubmitChanges();
+
+                    MessageBox.Show("Sửa thông tin thành công!", "Thông báo");
+                    DisplayStudentList(); 
+                }
+                else
+                {
+                    MessageBox.Show("Không tìm thấy sinh viên này trong cơ sở dữ liệu!");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi: " + ex.Message);
+            }
+        } 
 
         
         private void btnXoa_Click(object sender, EventArgs e)

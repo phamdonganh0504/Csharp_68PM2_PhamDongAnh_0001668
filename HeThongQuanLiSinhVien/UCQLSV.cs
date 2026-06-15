@@ -157,7 +157,36 @@ namespace HeThongQuanLiSinhVien
         
         private void btnXoa_Click(object sender, EventArgs e)
         {
-            
+            if (txtMaSV.Text == "")
+            {
+                MessageBox.Show("Vui lòng chọn một sinh viên để xóa!");
+                return;
+            }
+
+            DialogResult qs = MessageBox.Show("Bạn có chắc chắn muốn xóa sinh viên này không?", "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            if (qs == DialogResult.Yes)
+            {
+                try
+                {
+                    
+                    var svXoa = db.SinhViens.SingleOrDefault(x => x.MaSV == txtMaSV.Text);
+
+                    if (svXoa != null)
+                    {
+                        db.SinhViens.DeleteOnSubmit(svXoa); 
+                        db.SubmitChanges();                 
+
+                        MessageBox.Show("Xóa thành công!");
+                        btnLamMoi_Click(sender, e);          
+                        DisplayStudentList();               
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Lỗi xóa cơ sở dữ liệu: " + ex.Message);
+                }
+            }
         }
 
          

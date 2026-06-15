@@ -88,7 +88,7 @@ namespace HeThongQuanLiSinhVien
             this.txtMaSV.Name = "txtMaSV";
             this.txtMaSV.Size = new System.Drawing.Size(430, 30);
             this.txtMaSV.TabIndex = 1;
-            this.txtMaSV.TextChanged += new System.EventHandler(this.txtMaSV_TextChanged);
+          //  this.txtMaSV.TextChanged += new System.EventHandler(this.txtMaSV_TextChanged);
             // 
             // lblHoTen
             // 

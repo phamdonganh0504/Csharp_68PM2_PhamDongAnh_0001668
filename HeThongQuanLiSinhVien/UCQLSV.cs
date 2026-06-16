@@ -6,7 +6,6 @@ namespace HeThongQuanLiSinhVien
 {
     public partial class UCQLSV : UserControl
     {
-        
         QLSV_DataDataContext db = new QLSV_DataDataContext();
 
         int trangHienTai = 1;
@@ -37,13 +36,10 @@ namespace HeThongQuanLiSinhVien
                 
             }
 
-            
             LoadSinhVien_PhanTrang();
         }
 
-            
-        //================================================
-
+        //==================== HÀM LÕI PHÂN TRANG ============================
         private void LoadSinhVien_PhanTrang()
         {
             try
@@ -51,13 +47,13 @@ namespace HeThongQuanLiSinhVien
                 string keyword = txtTimKiem.Text.Trim().ToLower();
 
                 var svTruyVan = db.SinhViens.Where(sv =>
-                sv.MaSV.ToLower().Contains(keyword) ||
-                sv.HoTen.ToLower().Contains(keyword) ||
-                sv.Lop.ToLower().Contains(keyword)
+                    sv.MaSV.ToLower().Contains(keyword) ||
+                    sv.HoTen.ToLower().Contains(keyword) ||
+                    sv.Lop.ToLower().Contains(keyword)
                 );
+
                 int tongSinhVien = svTruyVan.Count();
                 tongSoTrang = (int)Math.Ceiling((double)tongSinhVien / kichThuocTrang);
-                
                 if (tongSoTrang == 0) tongSoTrang = 1;
 
                 lblPage.Text = $"Trang {trangHienTai}/{tongSoTrang}";
@@ -76,11 +72,12 @@ namespace HeThongQuanLiSinhVien
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi SQL " + ex.Message);
+                MessageBox.Show("Đã xảy ra sự cố tải dữ liệu: " + ex.Message, "Thông báo lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+            dgvSinhVien.ClearSelection();
         }
+
         //==================== NHÓM NÚT XỬ LÍ SỰ KIỆN PHÂN TRANG ============================
-         
         private void btnFirst_Click(object sender, EventArgs e)
         {
             trangHienTai = 1;
@@ -110,11 +107,12 @@ namespace HeThongQuanLiSinhVien
             trangHienTai = tongSoTrang;
             LoadSinhVien_PhanTrang();
         }
+
         //==================== NHÓM NÚT XỬ LÍ SỰ KIỆN TÌM KIẾM ============================
         private void btnTim_Click(object sender, EventArgs e)
         {
             trangHienTai = 1;
-            LoadSinhVien_PhanTrang() ;
+            LoadSinhVien_PhanTrang();
         }
 
         private void txtTimKiem_TextChanged(object sender, EventArgs e)
@@ -124,17 +122,15 @@ namespace HeThongQuanLiSinhVien
         }
 
         // ================================================
-
-
         private void dgvSinhVien_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            
             if (e.RowIndex >= 0 && e.RowIndex < dgvSinhVien.Rows.Count)
             {
-                
+                txtMaSV.ReadOnly = true;
+                txtMaSV.BackColor = System.Drawing.Color.LightGray;
+
                 DataGridViewRow row = dgvSinhVien.Rows[e.RowIndex];
 
-                
                 txtMaSV.Text = row.Cells[0].Value?.ToString();
                 txtHoTen.Text = row.Cells[1].Value?.ToString();
                 cboGioiTinh.Text = row.Cells[2].Value?.ToString();
@@ -150,12 +146,19 @@ namespace HeThongQuanLiSinhVien
                 }
             }
         }
-        // NÚT LÀM MỚI
+
+        //=========================== NÚT LÀM MỚI ===========================
         private void btnLamMoi_Click(object sender, EventArgs e)
         {
-            txtMaSV.Text = ""; txtHoTen.Text = ""; txtTimKiem.Text = "";
-            cboGioiTinh.SelectedIndex = -1; cboLop.SelectedIndex = -1;
-            dtpNgaySinh.Value = DateTime.Now;
+            txtMaSV.ReadOnly = false;
+            txtMaSV.BackColor = System.Drawing.SystemColors.Window;
+
+            txtMaSV.Text = "";
+            txtHoTen.Text = "";
+            txtTimKiem.Text = "";
+            cboGioiTinh.SelectedIndex = -1;
+            cboLop.SelectedIndex = -1;
+            dtpNgaySinh.Value = DateTime.Now.AddYears(-21);
 
             trangHienTai = 1;
             LoadSinhVien_PhanTrang();
@@ -164,20 +167,47 @@ namespace HeThongQuanLiSinhVien
         }
 
         //================================ CRUD SINH VIÊN =========================================
+        private bool KiemTraDuLieuDauVao()
+        {
+            if (string.IsNullOrWhiteSpace(txtMaSV.Text) ||
+                string.IsNullOrWhiteSpace(txtHoTen.Text) ||
+                string.IsNullOrWhiteSpace(cboGioiTinh.Text) ||
+                string.IsNullOrWhiteSpace(cboLop.Text))
+            {
+                MessageBox.Show("Bạn chưa nhập đầy đủ thông tin sinh viên!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+            return true;
+        }
+
         //  THÊM SINH VIÊN MỚI
         private void btnThem_Click(object sender, EventArgs e)
         {
+            if (KiemTraDuLieuDauVao() == false)
+            {
+                return;
+            }
+
             try
             {
+                string maKiemTra = txtMaSV.Text.Trim();
+
+                bool kTraTonTai = db.SinhViens.Any(sv => sv.MaSV == maKiemTra);
+                if (kTraTonTai == true)
+                {
+                    MessageBox.Show("Mã sinh viên này đã tồn tại trong hệ thống! Vui lòng chọn mã khác.", "Trùng mã dữ liệu", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    txtMaSV.Focus();
+                    return;
+                }
+
                 SinhVien svNew = new SinhVien();
-                svNew.MaSV = txtMaSV.Text;
-                svNew.HoTen = txtHoTen.Text;
-                svNew.Lop = cboLop.Text;
+                svNew.MaSV = txtMaSV.Text.Trim();
+                svNew.HoTen = txtHoTen.Text.Trim();
+                svNew.Lop = cboLop.Text.Trim();
                 svNew.GioiTinh = cboGioiTinh.Text;
-                svNew.NamSinh = dtpNgaySinh.Value.Date; 
-                
+                svNew.NamSinh = dtpNgaySinh.Value.Date;
+
                 db.SinhViens.InsertOnSubmit(svNew);
-                
                 db.SubmitChanges();
 
                 MessageBox.Show("Thêm sinh viên thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -185,7 +215,8 @@ namespace HeThongQuanLiSinhVien
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Trùng mã sinh viên hoặc Lỗi CSDL: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                this.db = new QLSV_DataDataContext();
+                MessageBox.Show("Thêm dữ liệu gặp lỗi hệ thống CSDL: \n" + ex.Message, "Lỗi Server", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -193,73 +224,75 @@ namespace HeThongQuanLiSinhVien
         // SỬA THÔNG TIN SINH VIÊN
         private void btnSua_Click(object sender, EventArgs e)
         {
-            if (txtMaSV.Text == "")
+            if (KiemTraDuLieuDauVao() == false)
             {
-                MessageBox.Show("Vui lòng chọn một sinh viên để sửa!", "Yêu cầu chọn dữ liệu", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
             try
             {
-                
-                var sv = db.SinhViens.SingleOrDefault(x => x.MaSV == txtMaSV.Text);
+                string maSvSua = txtMaSV.Text.Trim();
+
+                var sv = db.SinhViens.SingleOrDefault(x => x.MaSV == maSvSua);
 
                 if (sv != null)
                 {
-                    
-                    sv.HoTen = txtHoTen.Text;
+                    sv.HoTen = txtHoTen.Text.Trim();
                     sv.GioiTinh = cboGioiTinh.Text;
-                    sv.Lop = cboLop.Text;
+                    sv.Lop = cboLop.Text.Trim();
                     sv.NamSinh = dtpNgaySinh.Value.Date;
 
-                    
                     db.SubmitChanges();
 
-                    MessageBox.Show("Cập thông tin thành công!", "Thông báo" , MessageBoxButtons.OK, MessageBoxIcon.Information);
-                     
+                    MessageBox.Show("Cập nhật thông tin thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    btnLamMoi_Click(sender, e);
                 }
                 else
                 {
-                    MessageBox.Show("Không tìm thấy sinh viên này trong cơ sở dữ liệu!: \n" , "Thông báo lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Không tìm thấy mã sinh viên này trong hệ thống. Vui lòng thử ấn Làm Mới!", "Cảnh báo lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi: " + ex.Message, "Thông báo lỗi ", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                this.db = new QLSV_DataDataContext();
+                MessageBox.Show("Quá trình ghi dữ liệu cập nhật gặp sự cố: \n" + ex.Message, "Lỗi Server", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        // XÓA SINH VIÊN
+        // XOÁ THÔNG TIN SINH VIÊN
         private void btnXoa_Click(object sender, EventArgs e)
         {
-            if (txtMaSV.Text == "")
+            if (string.IsNullOrWhiteSpace(txtMaSV.Text))
             {
-                MessageBox.Show("Vui lòng chọn một sinh viên để xóa!","Thông báo " , MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Vui lòng chọn một sinh viên trên bảng dữ liệu để tiến hành xóa!", "Yêu cầu dữ liệu", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
-            DialogResult thongbao = MessageBox.Show("Bạn có chắc chắn muốn xóa sinh viên này không?", "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            DialogResult thongbao = MessageBox.Show($"Bạn có chắc chắn muốn xóa bản ghi '{txtMaSV.Text.Trim()}' vĩnh viễn khỏi hệ thống không?", "Xác nhận xóa dữ liệu", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
             if (thongbao == DialogResult.Yes)
             {
                 try
                 {
-                    
-                    var svXoa = db.SinhViens.SingleOrDefault(x => x.MaSV == txtMaSV.Text);
+                    var svXoa = db.SinhViens.SingleOrDefault(x => x.MaSV == txtMaSV.Text.Trim());
 
                     if (svXoa != null)
                     {
-                        db.SinhViens.DeleteOnSubmit(svXoa); 
-                        db.SubmitChanges();                 
+                        db.SinhViens.DeleteOnSubmit(svXoa);
+                        db.SubmitChanges();
 
-                        MessageBox.Show("Xóa thành công!", "Xác nhận kêt quả" , MessageBoxButtons.OK, MessageBoxIcon.Information );
-                        btnLamMoi_Click(sender, e);          
-                                      
+                        MessageBox.Show("Xóa sinh viên thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        btnLamMoi_Click(sender, e);
+                    }
+                    else
+                    {
+                        MessageBox.Show("Không tìm thấy dữ liệu sinh viên để tiến hành xóa. Có thể dữ liệu đã được dọn dẹp trước đó!", "Cảnh báo lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Không thể thực hiện xoá ! " + ex.Message, "Từ chối hệ thống", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    this.db = new QLSV_DataDataContext();
+                    MessageBox.Show("Lỗi: Không thể thực hiện lệnh xóa do tồn tại các thông tin ràng buộc tại bảng dữ liệu khác.\n" + ex.Message, "Ràng buộc hệ thống", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }

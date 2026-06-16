@@ -7,6 +7,16 @@
       <Column Name="Lop" Type="System.String" DbType="NVarChar(50)" CanBeNull="true" />
       <Column Name="GioiTinh" Type="System.String" DbType="NVarChar(10)" CanBeNull="true" />
       <Column Name="NamSinh" Type="System.DateTime" DbType="Date" CanBeNull="true" />
+      <Association Name="LopHoc_SinhVien" Member="LopHoc" ThisKey="Lop" OtherKey="MaLop" Type="LopHoc" IsForeignKey="true" />
+    </Type>
+  </Table>
+  <Table Name="dbo.LopHoc" Member="LopHocs">
+    <Type Name="LopHoc">
+      <Column Name="MaID" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="MaLop" Type="System.String" DbType="NVarChar(50) NOT NULL" CanBeNull="false" />
+      <Column Name="TenLop" Type="System.String" DbType="NVarChar(200) NOT NULL" CanBeNull="false" />
+      <Column Name="GhiChu" Type="System.String" DbType="NVarChar(MAX)" CanBeNull="true" />
+      <Association Name="LopHoc_SinhVien" Member="SinhViens" ThisKey="MaLop" OtherKey="Lop" Type="SinhVien" />
     </Type>
   </Table>
 </Database>

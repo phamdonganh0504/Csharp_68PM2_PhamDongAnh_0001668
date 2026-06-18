@@ -10,26 +10,38 @@ namespace HeThongQuanLiSinhVien
             InitializeComponent();
         }
 
-        private void btnLogin_Click(object sender, EventArgs e)
+        private void async  btnLogin_Click(object sender, EventArgs e)
         {
-            string username = txtUsername.Text;
-            string password = txtPassword.Text;
+            
+            string username = txtUsername.Text.Trim();
+            string password = txtPassword.Text.Trim();
 
-            if (username == "admin" && password == "")
+            
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             {
-                MessageBox.Show("Đăng nhập thành công!");
+                MessageBox.Show("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!", "Yêu cầu hệ thống", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
+            
+            if (username == "admin" && password == "123456" || username == "luongxuanhieu" && password == "123456"|| username == "phamdonganh" && password == "123456")
+
+            {
+                MessageBox.Show("Xác thực thành công. Đang truy cập hệ thống...", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                
                 this.Hide();
+                frm_main mainForm = new frm_main();
 
-                frm_main main = new frm_main();
-
-                main.FormClosed += (s, args) => this.Close();
-
-                main.Show();
+                
+                mainForm.FormClosed += (s, args) => this.Close();
+                mainForm.Show();
             }
             else
             {
-                MessageBox.Show("Đăng nhập thất bại!");
+                MessageBox.Show("Tên đăng nhập hoặc Mật khẩu không chính xác!", "Lỗi xác thực", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                txtPassword.Clear();
+                txtPassword.Focus();
             }
         }
     }

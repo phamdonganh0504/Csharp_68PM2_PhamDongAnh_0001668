@@ -152,7 +152,6 @@ namespace HeThongQuanLiSinhVien
         {
             txtMaSV.ReadOnly = false;
             txtMaSV.BackColor = System.Drawing.SystemColors.Window;
-
             txtMaSV.Text = "";
             txtHoTen.Text = "";
             txtTimKiem.Text = "";

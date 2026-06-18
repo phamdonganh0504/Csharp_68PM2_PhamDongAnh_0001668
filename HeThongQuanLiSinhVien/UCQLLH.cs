@@ -35,7 +35,7 @@ namespace HeThongQuanLiSinhVien
             this.txtSearch.TextChanged += txtSearch_TextChanged;
 
             this.dgvClass.CellClick += dgvClass_CellClick;
-            // this.btnViewStudent.Click += btnViewStudent_Click;
+             this.btnViewStudent.Click += btnViewStudent_Click;
         }
 
         //============ CHỨC NĂNG TÌM KIẾM VÀ PHÂN TRANG ==============
@@ -271,6 +271,26 @@ namespace HeThongQuanLiSinhVien
                     MessageBox.Show("Lỗi kết nối cơ sở dữ liệu: " + ex.Message, "Lỗi Server", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
+        }
+
+        // ======================= XEM DANH SÁCH SINH VIÊN TRONG LỚP =======================
+        private void btnViewStudent_Click(object sender, EventArgs e)
+        {
+            
+            if (string.IsNullOrWhiteSpace(txtClassCode.Text))
+            {
+                MessageBox.Show("Vui lòng click chọn một Lớp học ở bảng dữ liệu bên dưới để xem sỹ số!", "Yêu cầu cung cấp dữ liệu", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            string parseCodeMaLopTruyCap = txtClassCode.Text.Trim();
+            string parseCodeTenLop = txtClassName.Text.Trim(); 
+
+            
+            frm_DS_SinhVienLop hienThiCuaSoChiTietDS_TheoMlop = new frm_DS_SinhVienLop(parseCodeMaLopTruyCap, parseCodeTenLop);
+
+             
+            hienThiCuaSoChiTietDS_TheoMlop.ShowDialog();
         }
     }
 
